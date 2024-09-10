@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 	"time"
+
+	"github.com/dberstein/recanati-kvd/log"
 )
 
 type Record struct {
@@ -53,6 +55,7 @@ func (kv *KV) Add(key string, value []byte, expiry time.Duration) {
 		value:   value,
 		expires: expires,
 	}
+	log.Print("added key: ", key, ":", expiry)
 }
 
 func (kv *KV) Get(key string) ([]byte, error) {
@@ -65,6 +68,7 @@ func (kv *KV) Get(key string) ([]byte, error) {
 	}
 	if !value.expires.IsZero() && value.expires.Sub(time.Now()) < 0 {
 		delete(kv.values, key)
+		log.Print("deleted key: ", key)
 		return value.value, fmt.Errorf("key not found: %q", key)
 	}
 
@@ -76,6 +80,7 @@ func (kv *KV) Delete(key string) {
 	defer kv.Unlock()
 
 	delete(kv.values, key)
+	log.Print("deleted key: ", key)
 }
 
 func (kv *KV) Expire() {
@@ -106,6 +111,8 @@ func (kv *KV) List() map[string]ListRecord {
 		}
 
 		if expires < 0 {
+			delete(kv.values, key)
+			log.Print("deleted key: ", key)
 			continue
 		}
 

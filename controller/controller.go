@@ -23,7 +23,7 @@ func NewController() *Controller {
 func (c *Controller) Add(w http.ResponseWriter, r *http.Request) {
 	payload := struct {
 		Key   string `json:"key"`
-		Value string `json:"value"`
+		Value []byte `json:"value"`
 	}{}
 
 	body, err := io.ReadAll(r.Body) // from body
@@ -79,7 +79,7 @@ func (c *Controller) AddPath(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	c.Kv.Add(key, string(value), expiry)
+	c.Kv.Add(key, value, expiry)
 }
 
 func (c *Controller) Get(w http.ResponseWriter, r *http.Request) {

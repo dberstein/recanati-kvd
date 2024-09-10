@@ -7,7 +7,7 @@ import (
 )
 
 type Record struct {
-	value   string
+	value   []byte
 	expires time.Time
 }
 
@@ -22,7 +22,7 @@ func (r *Record) IsExpired() bool {
 }
 
 type ListRecord struct {
-	Value   string `json:"value"`
+	Value   []byte `json:"value"`
 	Expires string `json:"expires"`
 }
 
@@ -38,7 +38,7 @@ func NewKV() *KV {
 	return kv
 }
 
-func (kv *KV) Add(key string, value string, expiry time.Duration) {
+func (kv *KV) Add(key string, value []byte, expiry time.Duration) {
 	kv.Lock()
 	defer kv.Unlock()
 
@@ -55,7 +55,7 @@ func (kv *KV) Add(key string, value string, expiry time.Duration) {
 	}
 }
 
-func (kv *KV) Get(key string) (string, error) {
+func (kv *KV) Get(key string) ([]byte, error) {
 	kv.Lock()
 	defer kv.Unlock()
 

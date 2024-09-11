@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"net"
 	"net/http"
 	"time"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/dberstein/recanati-kvd/controller"
 	"github.com/dberstein/recanati-kvd/log"
+	"github.com/dberstein/recanati-kvd/rw"
 )
 
 func setupRouter(controller *controller.Controller) *http.ServeMux {
@@ -28,40 +30,59 @@ func LoggerMiddleware(next http.Handler) http.Handler {
 		func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
 
-			next.ServeHTTP(w, r)
+			rw := rw.New(w)
+			next.ServeHTTP(rw, r)
 
 			ip, _, err := net.SplitHostPort(r.RemoteAddr)
 			if err != nil {
 				panic(err)
 			}
 
-			log.Print(r.Method, r.URL, ip, time.Now().Sub(start))
+			log.Print(r.Method, r.URL, ip, rw.StatusCode, time.Now().Sub(start))
 		},
 	)
 }
 
 func main() {
+	freqString := flag.String("f", "5m", "cleanup frequency")
+	addrString := flag.String("l", ":8080", "listen address")
+
+	flag.Parse()
+
+	freqDuration, err := time.ParseDuration(*freqString)
+	if err != nil {
+		panic(err)
+	}
+
 	controller := controller.NewController()
 	router := setupRouter(controller)
 
-	ticker := time.NewTicker(5 * time.Second)
+	// expiry ticker
+	ticker := time.NewTicker(freqDuration)
 	done := make(chan bool)
+
+	// expire keys in go function and ticker...
 	go func() {
 		for {
 			select {
 			case <-done:
 				return
 			case t := <-ticker.C:
-				log.Print("Tick at", t)
+				log.Print("Tick at: ", t)
 				controller.Kv.Expire()
 			}
 		}
 	}()
 
+	log.Printf("Listening address %q\n", *addrString)
+	log.Printf("Cleanup frequency %q\n", freqDuration)
+
 	chain := LoggerMiddleware(router)
-	if err := http.ListenAndServe(":8080", chain); err != nil {
+	if err := http.ListenAndServe(*addrString, chain); err != nil {
+		// stop and close expiry go function...
 		ticker.Stop()
 		done <- true
+
 		log.Fatal(err)
 	}
 }

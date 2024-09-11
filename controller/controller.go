@@ -56,6 +56,7 @@ func (c *Controller) Add(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c.Kv.Add(key, []byte(payload.Value), expiry)
+	w.WriteHeader(http.StatusCreated)
 }
 
 // AddPath adds `key` from path with `value` being request body (ie. not JSON)
@@ -82,6 +83,7 @@ func (c *Controller) AddPath(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c.Kv.Add(key, value, expiry)
+	w.WriteHeader(http.StatusCreated)
 }
 
 // Get retrieves `key` from path
@@ -92,7 +94,9 @@ func (c *Controller) Get(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("key not found: %q", key), http.StatusNotFound)
 		return
 	}
+
 	w.Write([]byte(value))
+	w.WriteHeader(http.StatusOK)
 }
 
 // Delete deletes `key` from path
@@ -109,5 +113,6 @@ func (c *Controller) List(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
+	w.WriteHeader(http.StatusOK)
 	w.Write(res)
 }

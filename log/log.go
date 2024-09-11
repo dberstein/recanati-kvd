@@ -5,6 +5,10 @@ import (
 	"os"
 )
 
+func Printf(format string, v ...any) {
+	log.Printf(format, v...)
+}
+
 func Print(v ...any) {
 	log.Println(v...)
 }

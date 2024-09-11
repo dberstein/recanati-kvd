@@ -22,7 +22,7 @@ func (r *Record) IsExpired() bool {
 }
 
 type KV struct {
-	sync.Mutex
+	sync.RWMutex
 	values map[string]Record
 }
 
@@ -49,23 +49,23 @@ func (kv *KV) Add(key string, value []byte, expiry time.Duration) {
 		value:   value,
 		expires: expires,
 	}
-	log.Print("added key: ", key, ":", expiry)
+	log.Print("\tadded key: ", key, ":", expiry)
 }
 
 // Get value of `key` if still not expired
 func (kv *KV) Get(key string) ([]byte, error) {
-	kv.Lock()
-	defer kv.Unlock()
+	kv.RLock()
+	defer kv.RUnlock()
 
 	value, ok := kv.values[key]
 	if !ok {
-		return value.value, fmt.Errorf("key not found: %q", key)
+		return value.value, fmt.Errorf("\tkey not found: %q", key)
 	}
 	if !value.expires.IsZero() && value.expires.Sub(time.Now()) < 0 {
 		kv.delete(key)
-		return value.value, fmt.Errorf("key not found: %q", key)
+		return value.value, fmt.Errorf("\tkey not found: %q", key)
 	}
-	log.Print("accessed key: ", key)
+	log.Print("\taccessed key: ", key)
 
 	return value.value, nil
 }
@@ -93,8 +93,8 @@ func (kv *KV) Expire() {
 
 // List returns list of non expired keys, their values and remaining expiry time
 func (kv *KV) List() map[string]string {
-	kv.Mutex.Lock()
-	defer kv.Mutex.Unlock()
+	kv.RWMutex.Lock()
+	defer kv.RWMutex.Unlock()
 
 	// Copy from the original map to the target map
 	targetMap := make(map[string]string)
@@ -119,5 +119,5 @@ func (kv *KV) List() map[string]string {
 
 func (kv *KV) delete(key string) {
 	delete(kv.values, key)
-	log.Print("deleted key: ", key)
+	log.Print("\tdeleted key: ", key)
 }

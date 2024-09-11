@@ -53,6 +53,10 @@ func (c *Controller) Add(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+		if expiry < 0 {
+			http.Error(w, fmt.Sprintf("expiration must be positive: %s\n", expiry), http.StatusBadRequest)
+			return
+		}
 	}
 
 	c.Kv.Add(key, []byte(payload.Value), expiry)
@@ -78,6 +82,10 @@ func (c *Controller) AddPath(w http.ResponseWriter, r *http.Request) {
 		expiry, err = time.ParseDuration(expiryString)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		if expiry < 0 {
+			http.Error(w, fmt.Sprintf("expiration must be positive: %s\n", expiry), http.StatusBadRequest)
 			return
 		}
 	}

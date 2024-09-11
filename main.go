@@ -1,19 +1,18 @@
 package main
 
 import (
-	"fmt"
-	"log"
+	"net"
 	"net/http"
 	"time"
 
 	// "github.com/patrickmn/go-cache"
 
 	"github.com/dberstein/recanati-kvd/controller"
+	"github.com/dberstein/recanati-kvd/log"
 )
 
-func main() {
+func setupRouter(controller *controller.Controller) *http.ServeMux {
 	router := http.NewServeMux()
-	controller := controller.NewController()
 
 	router.HandleFunc("POST /store", controller.Add)
 	router.HandleFunc("POST /store/{key}", controller.AddPath)
@@ -21,7 +20,31 @@ func main() {
 	router.HandleFunc("DELETE /store/{key}", controller.Delete)
 	router.HandleFunc("GET /store-all", controller.List)
 
-	ticker := time.NewTicker(5 * time.Minute)
+	return router
+}
+
+func LoggerMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			start := time.Now()
+
+			next.ServeHTTP(w, r)
+
+			ip, _, err := net.SplitHostPort(r.RemoteAddr)
+			if err != nil {
+				panic(err)
+			}
+
+			log.Print(r.Method, r.URL, ip, time.Now().Sub(start))
+		},
+	)
+}
+
+func main() {
+	controller := controller.NewController()
+	router := setupRouter(controller)
+
+	ticker := time.NewTicker(5 * time.Second)
 	done := make(chan bool)
 	go func() {
 		for {
@@ -29,13 +52,14 @@ func main() {
 			case <-done:
 				return
 			case t := <-ticker.C:
-				fmt.Println("Tick at", t)
+				log.Print("Tick at", t)
 				controller.Kv.Expire()
 			}
 		}
 	}()
 
-	if err := http.ListenAndServe(":8080", router); err != nil {
+	chain := LoggerMiddleware(router)
+	if err := http.ListenAndServe(":8080", chain); err != nil {
 		ticker.Stop()
 		done <- true
 		log.Fatal(err)

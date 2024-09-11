@@ -23,11 +23,6 @@ func (r *Record) IsExpired() bool {
 	return false
 }
 
-type ListRecord struct {
-	Value   []byte `json:"value"`
-	Expires string `json:"expires"`
-}
-
 type KV struct {
 	sync.Mutex
 	values map[string]Record
@@ -100,12 +95,12 @@ func (kv *KV) Expire() {
 }
 
 // List returns list of non expired keys, their values and remaining expiry time
-func (kv *KV) List() map[string]ListRecord {
+func (kv *KV) List() map[string]string {
 	kv.Mutex.Lock()
 	defer kv.Mutex.Unlock()
 
 	// Copy from the original map to the target map
-	targetMap := make(map[string]ListRecord)
+	targetMap := make(map[string]string)
 	for key, value := range kv.values {
 		var expires time.Duration
 		if value.expires.IsZero() {
@@ -120,10 +115,7 @@ func (kv *KV) List() map[string]ListRecord {
 			continue
 		}
 
-		targetMap[key] = ListRecord{
-			Value:   value.value,
-			Expires: fmt.Sprintf("%s", expires),
-		}
+		targetMap[key] = fmt.Sprintf("%s", expires)
 	}
 
 	return targetMap

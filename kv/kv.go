@@ -67,6 +67,7 @@ func (kv *KV) Get(key string) ([]byte, error) {
 		kv.delete(key)
 		return value.value, fmt.Errorf("key not found: %q", key)
 	}
+	log.Print("accessed key: ", key)
 
 	return value.value, nil
 }

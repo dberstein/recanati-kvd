@@ -40,6 +40,7 @@ func NewKV() *KV {
 	return kv
 }
 
+// Add `key`, `value` with `expiry` (expiry `time.Durtion(0)` means no expiry)
 func (kv *KV) Add(key string, value []byte, expiry time.Duration) {
 	kv.Lock()
 	defer kv.Unlock()
@@ -58,6 +59,7 @@ func (kv *KV) Add(key string, value []byte, expiry time.Duration) {
 	log.Print("added key: ", key, ":", expiry)
 }
 
+// Get value of `key` if still not expired
 func (kv *KV) Get(key string) ([]byte, error) {
 	kv.Lock()
 	defer kv.Unlock()
@@ -75,6 +77,7 @@ func (kv *KV) Get(key string) ([]byte, error) {
 	return value.value, nil
 }
 
+// Delete removes cache for `key`
 func (kv *KV) Delete(key string) {
 	kv.Lock()
 	defer kv.Unlock()
@@ -96,6 +99,7 @@ func (kv *KV) Expire() {
 	}
 }
 
+// List returns list of non expired keys, their values and remaining expiry time
 func (kv *KV) List() map[string]ListRecord {
 	kv.Mutex.Lock()
 	defer kv.Mutex.Unlock()

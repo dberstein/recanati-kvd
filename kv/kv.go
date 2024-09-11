@@ -64,8 +64,7 @@ func (kv *KV) Get(key string) ([]byte, error) {
 		return value.value, fmt.Errorf("key not found: %q", key)
 	}
 	if !value.expires.IsZero() && value.expires.Sub(time.Now()) < 0 {
-		delete(kv.values, key)
-		log.Print("deleted key: ", key)
+		kv.delete(key)
 		return value.value, fmt.Errorf("key not found: %q", key)
 	}
 
@@ -77,8 +76,7 @@ func (kv *KV) Delete(key string) {
 	kv.Lock()
 	defer kv.Unlock()
 
-	delete(kv.values, key)
-	log.Print("deleted key: ", key)
+	kv.delete(key)
 }
 
 func (kv *KV) Expire() {
@@ -110,8 +108,7 @@ func (kv *KV) List() map[string]string {
 		}
 
 		if expires < 0 {
-			delete(kv.values, key)
-			log.Print("deleted key: ", key)
+			kv.delete(key)
 			continue
 		}
 
@@ -119,4 +116,9 @@ func (kv *KV) List() map[string]string {
 	}
 
 	return targetMap
+}
+
+func (kv *KV) delete(key string) {
+	delete(kv.values, key)
+	log.Print("deleted key: ", key)
 }

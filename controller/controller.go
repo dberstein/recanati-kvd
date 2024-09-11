@@ -24,7 +24,7 @@ func NewController() *Controller {
 func (c *Controller) Add(w http.ResponseWriter, r *http.Request) {
 	payload := struct {
 		Key   string `json:"key"`
-		Value []byte `json:"value"`
+		Value string `json:"value"`
 	}{}
 
 	body, err := io.ReadAll(r.Body) // from body
@@ -32,13 +32,13 @@ func (c *Controller) Add(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	defer r.Body.Close()
 
 	err = json.Unmarshal(body, &payload)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	defer r.Body.Close()
 
 	key := payload.Key
 	if key == "" {
@@ -55,7 +55,7 @@ func (c *Controller) Add(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	c.Kv.Add(key, payload.Value, expiry)
+	c.Kv.Add(key, []byte(payload.Value), expiry)
 }
 
 // AddPath adds `key` from path with `value` being request body (ie. not JSON)

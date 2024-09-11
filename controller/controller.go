@@ -20,6 +20,7 @@ func NewController() *Controller {
 	}
 }
 
+// Add adds JSON payload with `key` and `value`
 func (c *Controller) Add(w http.ResponseWriter, r *http.Request) {
 	payload := struct {
 		Key   string `json:"key"`
@@ -57,6 +58,7 @@ func (c *Controller) Add(w http.ResponseWriter, r *http.Request) {
 	c.Kv.Add(key, payload.Value, expiry)
 }
 
+// AddPath adds `key` from path with `value` being request body (ie. not JSON)
 func (c *Controller) AddPath(w http.ResponseWriter, r *http.Request) {
 	value, err := io.ReadAll(r.Body) // from body
 	if err != nil {
@@ -82,6 +84,7 @@ func (c *Controller) AddPath(w http.ResponseWriter, r *http.Request) {
 	c.Kv.Add(key, value, expiry)
 }
 
+// Get retrieves `key` from path
 func (c *Controller) Get(w http.ResponseWriter, r *http.Request) {
 	key := r.PathValue("key")
 	value, err := c.Kv.Get(key)
@@ -92,11 +95,13 @@ func (c *Controller) Get(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(value))
 }
 
+// Delete deletes `key` from path
 func (c *Controller) Delete(w http.ResponseWriter, r *http.Request) {
 	key := r.PathValue("key")
 	c.Kv.Delete(key)
 }
 
+// List lists active items
 func (c *Controller) List(w http.ResponseWriter, r *http.Request) {
 	list := c.Kv.List()
 

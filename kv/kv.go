@@ -92,7 +92,7 @@ func (kv *KV) Expire() {
 		if v.expires.IsZero() {
 			continue
 		}
-		if v.expires.Before(now) {
+		if v.expires.After(now) {
 			continue
 		}
 		kv.Delete(k)

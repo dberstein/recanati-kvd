@@ -20,6 +20,25 @@ func NewController() *Controller {
 	}
 }
 
+func (c *Controller) add(w http.ResponseWriter, r *http.Request, key string, value []byte) {
+	var expiry time.Duration
+	if r.URL.Query().Has("expires") {
+		expiryString := r.URL.Query().Get("expires") // from query string
+		expiry, err := time.ParseDuration(expiryString)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		if expiry < 0 {
+			http.Error(w, fmt.Sprintf("expiration must be positive: %s\n", expiry), http.StatusBadRequest)
+			return
+		}
+	}
+
+	c.Kv.Add(key, value, expiry)
+	w.WriteHeader(http.StatusCreated)
+}
+
 // Add adds JSON payload with `key` and `value`
 func (c *Controller) Add(w http.ResponseWriter, r *http.Request) {
 	payload := struct {
@@ -45,22 +64,7 @@ func (c *Controller) Add(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "missing key", http.StatusBadRequest)
 	}
 
-	var expiry time.Duration
-	if r.URL.Query().Has("expires") {
-		expiryString := r.URL.Query().Get("expires") // from query string
-		expiry, err = time.ParseDuration(expiryString)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		if expiry < 0 {
-			http.Error(w, fmt.Sprintf("expiration must be positive: %s\n", expiry), http.StatusBadRequest)
-			return
-		}
-	}
-
-	c.Kv.Add(key, []byte(payload.Value), expiry)
-	w.WriteHeader(http.StatusCreated)
+	c.add(w, r, key, []byte(payload.Value))
 }
 
 // AddPath adds `key` from path with `value` being request body (ie. not JSON)
@@ -76,22 +80,7 @@ func (c *Controller) AddPath(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "missing key", http.StatusBadRequest)
 	}
 
-	var expiry time.Duration
-	if r.URL.Query().Has("expires") {
-		expiryString := r.URL.Query().Get("expires") // from query string
-		expiry, err = time.ParseDuration(expiryString)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		if expiry < 0 {
-			http.Error(w, fmt.Sprintf("expiration must be positive: %s\n", expiry), http.StatusBadRequest)
-			return
-		}
-	}
-
-	c.Kv.Add(key, value, expiry)
-	w.WriteHeader(http.StatusCreated)
+	c.add(w, r, key, value)
 }
 
 // Get retrieves `key` from path

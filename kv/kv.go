@@ -17,10 +17,8 @@ func (r *Record) IsExpired() bool {
 	if r.expires.IsZero() {
 		return false
 	}
-	if time.Now().Sub(r.expires) > 0 {
-		return true
-	}
-	return false
+
+	return time.Now().Sub(r.expires) > 0
 }
 
 type KV struct {

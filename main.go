@@ -38,7 +38,7 @@ func LoggerMiddleware(next http.Handler) http.Handler {
 				panic(err)
 			}
 
-			log.Print(r.Method, r.URL, ip, rw.StatusCode, time.Now().Sub(start))
+			log.Print(r.Method, r.URL, ip, rw.StatusCode, time.Now().Sub(start), r.Header["User-Agent"])
 		},
 	)
 }

@@ -22,20 +22,23 @@ func NewController() *Controller {
 
 func (c *Controller) add(w http.ResponseWriter, r *http.Request, key string, value []byte) {
 	var expiry time.Duration
-	if r.URL.Query().Has("expires") {
+	if !r.URL.Query().Has("expires") {
+		c.Kv.Add(key, value, expiry)
+	} else {
 		expiryString := r.URL.Query().Get("expires") // from query string
 		expiry, err := time.ParseDuration(expiryString)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+
 		if expiry < 0 {
 			http.Error(w, fmt.Sprintf("expiration must be positive: %s\n", expiry), http.StatusBadRequest)
 			return
 		}
-	}
 
-	c.Kv.Add(key, value, expiry)
+		c.Kv.Add(key, value, expiry)
+	}
 	w.WriteHeader(http.StatusCreated)
 }
 
@@ -69,15 +72,15 @@ func (c *Controller) Add(w http.ResponseWriter, r *http.Request) {
 
 // AddPath adds `key` from path with `value` being request body (ie. not JSON)
 func (c *Controller) AddPath(w http.ResponseWriter, r *http.Request) {
+	key := r.PathValue("key")
+	if key == "" {
+		http.Error(w, "missing key", http.StatusBadRequest)
+	}
+
 	value, err := io.ReadAll(r.Body) // from body
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
-	}
-
-	key := r.PathValue("key")
-	if key == "" {
-		http.Error(w, "missing key", http.StatusBadRequest)
 	}
 
 	c.add(w, r, key, value)

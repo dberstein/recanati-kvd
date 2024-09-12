@@ -43,22 +43,9 @@ func LoggerMiddleware(next http.Handler) http.Handler {
 	)
 }
 
-func main() {
-	freqString := flag.String("f", "5m", "cleanup frequency")
-	addrString := flag.String("l", ":8080", "listen address")
-
-	flag.Parse()
-
-	freqDuration, err := time.ParseDuration(*freqString)
-	if err != nil {
-		panic(err)
-	}
-
-	controller := controller.NewController()
-	router := setupRouter(controller)
-
+func backgroundExpiry(controller *controller.Controller, freq time.Duration) (*time.Ticker, chan bool) {
 	// expiry ticker
-	ticker := time.NewTicker(freqDuration)
+	ticker := time.NewTicker(freq)
 	done := make(chan bool)
 
 	// expire keys in go function and ticker...
@@ -73,6 +60,24 @@ func main() {
 			}
 		}
 	}()
+
+	return ticker, done
+}
+
+func main() {
+	freqString := flag.String("f", "5m", "cleanup frequency")
+	addrString := flag.String("l", ":8080", "listen address")
+
+	flag.Parse()
+
+	freqDuration, err := time.ParseDuration(*freqString)
+	if err != nil {
+		panic(err)
+	}
+
+	controller := controller.NewController()
+	router := setupRouter(controller)
+	ticker, done := backgroundExpiry(controller, freqDuration)
 
 	log.Printf("Listening address %q\n", *addrString)
 	log.Printf("Cleanup frequency %q\n", freqDuration)

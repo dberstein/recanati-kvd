@@ -68,9 +68,24 @@ func TestDelete(t *testing.T) {
 	assert.Equal(err.Error(), "\tkey not found: \"all\"")
 }
 
-// func TestList(t *testing.T) {
-// 	assert := assert.New(t)
-// 	controller := controller.NewController()
-// 	router := setupRouter(controller)
+func TestList(t *testing.T) {
+	assert := assert.New(t)
+	controller := controller.NewController()
+	router := setupRouter(controller)
 
-// }
+	// create keys
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/store", strings.NewReader(`{"key":"all1", "value":"123"}`))
+	router.ServeHTTP(w, req)
+	assert.Equal(201, w.Code)
+	req, _ = http.NewRequest("POST", "/store", strings.NewReader(`{"key":"all2", "value":"321"}`))
+	router.ServeHTTP(w, req)
+	assert.Equal(201, w.Code)
+
+	// list keys
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/store-all", nil)
+	router.ServeHTTP(w, req)
+	assert.Equal(200, w.Code)
+	assert.Equal("{\"all1\":\"0s\",\"all2\":\"0s\"}", w.Body.String())
+}

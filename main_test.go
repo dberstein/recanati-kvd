@@ -147,6 +147,7 @@ func TestExpire(t *testing.T) {
 	router.ServeHTTP(w, req)
 	assert.Equal(201, w.Code)
 
+	controller.Kv.Expire()
 	controller.Kv.Stop()
 
 	list := controller.Kv.List()

@@ -157,6 +157,8 @@ func (kv *KV) Start(freq time.Duration) {
 }
 
 func (kv *KV) Stop() {
-	kv.ticker.Stop()
+	if kv.ticker != nil {
+		kv.ticker.Stop()
+	}
 	kv.done <- true
 }

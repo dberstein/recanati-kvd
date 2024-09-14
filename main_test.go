@@ -30,6 +30,9 @@ func TestAdd(t *testing.T) {
 	val, err = controller.Kv.Get("all")
 	assert.Equal(err, nil)
 	assert.Equal("123", string(val))
+
+	assert.True(controller.Kv.Exists("all"))
+	assert.False(controller.Kv.Exists("fake"))
 }
 
 func TestAddPath(t *testing.T) {
@@ -52,6 +55,9 @@ func TestAddPath(t *testing.T) {
 	val, err = controller.Kv.Get("all")
 	assert.Equal(err, nil)
 	assert.Equal(`{"key":"some", "value":"123"}`, string(val))
+
+	assert.True(controller.Kv.Exists("all"))
+	assert.False(controller.Kv.Exists("fake"))
 }
 
 func TestGet(t *testing.T) {
@@ -79,15 +85,25 @@ func TestDelete(t *testing.T) {
 	controller := controller.NewController()
 	router := setupRouter(controller)
 
-	// delete key
+	// create key
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("DELETE", "/store/all", nil)
+	req, _ := http.NewRequest("POST", "/store", strings.NewReader(`{"key":"all", "value":"123"}`))
+	router.ServeHTTP(w, req)
+	assert.Equal(201, w.Code)
+
+	assert.True(controller.Kv.Exists("all"))
+
+	// delete key
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("DELETE", "/store/all", nil)
 	router.ServeHTTP(w, req)
 	assert.Equal(200, w.Code)
 
 	// key does not exists
 	_, err := controller.Kv.Get("all")
 	assert.Equal(err.Error(), "\tkey not found: \"all\"")
+
+	assert.False(controller.Kv.Exists("all"))
 }
 
 func TestList(t *testing.T) {
@@ -110,4 +126,8 @@ func TestList(t *testing.T) {
 	router.ServeHTTP(w, req)
 	assert.Equal(200, w.Code)
 	assert.Equal("{\"all1\":\"0s\",\"all2\":\"0s\"}", w.Body.String())
+
+	assert.True(controller.Kv.Exists("all1"))
+	assert.True(controller.Kv.Exists("all2"))
+	assert.False(controller.Kv.Exists("all3"))
 }

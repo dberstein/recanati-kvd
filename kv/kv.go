@@ -35,6 +35,15 @@ func NewKV() *KV {
 	return kv
 }
 
+// Exists returns `true` for current keys otherwise `false`
+func (kv *KV) Exists(key string) bool {
+	value, ok := kv.values[key]
+	if !ok {
+		return false
+	}
+	return !value.IsExpired()
+}
+
 // Add `key`, `value` with `expiry` (expiry `time.Durtion(0)` means no expiry)
 func (kv *KV) Add(key string, value []byte, expiry time.Duration) {
 	kv.Lock()

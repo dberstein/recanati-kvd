@@ -60,7 +60,7 @@ func (kv *KV) Add(key string, value []byte, expiry time.Duration) {
 		value:   value,
 		expires: expires,
 	}
-	log.Print("\tadded key: ", key, ":", expiry)
+	log.Printf("\tadded key: %q (expires: %s)", key, expiry)
 }
 
 // Get value of `key` if still not expired
@@ -76,7 +76,7 @@ func (kv *KV) Get(key string) ([]byte, error) {
 		kv.delete(key)
 		return value.value, fmt.Errorf("\tkey not found: %q", key)
 	}
-	log.Print("\taccessed key: ", key)
+	log.Printf("\taccessed key: %q", key)
 
 	return value.value, nil
 }
@@ -134,7 +134,7 @@ func (kv *KV) List() map[string]string {
 
 func (kv *KV) delete(key string) {
 	delete(kv.values, key)
-	log.Print("\tdeleted key: ", key)
+	log.Printf("\tdeleted key: %q", key)
 }
 
 func (kv *KV) Start(freq time.Duration) {

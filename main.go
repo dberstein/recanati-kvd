@@ -43,27 +43,6 @@ func LoggerMiddleware(next http.Handler) http.Handler {
 	)
 }
 
-func backgroundExpiry(controller *controller.Controller, freq time.Duration) (*time.Ticker, chan bool) {
-	// expiry ticker
-	ticker := time.NewTicker(freq)
-	done := make(chan bool)
-
-	// expire keys in go function and ticker...
-	go func() {
-		for {
-			select {
-			case <-done:
-				return
-			case t := <-ticker.C:
-				log.Print("Tick at: ", t)
-				controller.Kv.Expire()
-			}
-		}
-	}()
-
-	return ticker, done
-}
-
 func main() {
 	freqString := flag.String("f", "5m", "cleanup frequency")
 	addrString := flag.String("l", ":8080", "listen address")

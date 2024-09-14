@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/dberstein/recanati-kvd/controller"
 	"github.com/stretchr/testify/assert"
@@ -133,5 +134,21 @@ func TestList(t *testing.T) {
 }
 
 func TestExpire(t *testing.T) {
-	t.Skip("background expiry test not implemented")
+	assert := assert.New(t)
+	controller := controller.NewController()
+	router := setupRouter(controller)
+
+	// todo: make background goroutine run
+	controller.Kv.Start(500 * time.Millisecond)
+
+	// create keys
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/store?expire=1ns", strings.NewReader(`{"key":"all", "value":"123"}`))
+	router.ServeHTTP(w, req)
+	assert.Equal(201, w.Code)
+
+	controller.Kv.Stop()
+
+	list := controller.Kv.List()
+	assert.Equal(1, len(list))
 }

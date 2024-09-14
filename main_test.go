@@ -52,6 +52,24 @@ func TestAddBroken(t *testing.T) {
 	req, _ = http.NewRequest("POST", "/store", strings.NewReader(`{"Xkey":"all", "value":"123"}`))
 	LoggerMiddleware(router).ServeHTTP(w, req)
 	assert.Equal(400, w.Code)
+
+	// create key with negative expiration
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/store?expires=-1s", strings.NewReader(`{"Xkey":"all", "value":"123"}`))
+	LoggerMiddleware(router).ServeHTTP(w, req)
+	assert.Equal(400, w.Code)
+
+	// create key with invalid expiration
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/store?expires=1gs", strings.NewReader(`{"Xkey":"all", "value":"123"}`))
+	LoggerMiddleware(router).ServeHTTP(w, req)
+	assert.Equal(400, w.Code)
+
+	// create key with invalid expiration
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/store?expires=", strings.NewReader(`{"Xkey":"all", "value":"123"}`))
+	LoggerMiddleware(router).ServeHTTP(w, req)
+	assert.Equal(400, w.Code)
 }
 
 func TestAddPath(t *testing.T) {

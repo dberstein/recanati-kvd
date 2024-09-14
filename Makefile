@@ -1,7 +1,7 @@
 COVFILE := x.cov
 
 test:
-	@go test -coverprofile $(COVFILE)  ./... \
+	@go test -v -coverprofile $(COVFILE)  ./... \
 	&& go tool cover -func=$(COVFILE)
 
 run:

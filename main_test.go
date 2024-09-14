@@ -131,3 +131,7 @@ func TestList(t *testing.T) {
 	assert.True(controller.Kv.Exists("all2"))
 	assert.False(controller.Kv.Exists("all3"))
 }
+
+func TestExpire(t *testing.T) {
+	t.Skip("background expiry test not implemented")
+}

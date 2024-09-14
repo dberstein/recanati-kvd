@@ -75,13 +75,13 @@ func main() {
 		panic(err)
 	}
 
-	controller := controller.NewController()
-	router := setupRouter(controller)
-	controller.Kv.Start(freqDuration)
-
 	log.Printf("Listening address %q\n", *addrString)
 	log.Printf("Cleanup frequency %q\n", freqDuration)
 
+	controller := controller.NewController()
+	router := setupRouter(controller)
+
+	controller.Kv.Start(freqDuration)
 	chain := LoggerMiddleware(router)
 	if err := http.ListenAndServe(*addrString, chain); err != nil {
 		controller.Kv.Stop()

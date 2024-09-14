@@ -21,15 +21,9 @@ func TestAdd(t *testing.T) {
 	assert.Equal(err.Error(), "\tkey not found: \"all\"")
 	assert.Equal([]uint8([]byte(nil)), val)
 
-	// create key with broken JSON
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/store", strings.NewReader(`{"key":"all" "value":"123"}`))
-	router.ServeHTTP(w, req)
-	assert.Equal(400, w.Code)
-
 	// create key
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("POST", "/store", strings.NewReader(`{"key":"all", "value":"123"}`))
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/store", strings.NewReader(`{"key":"all", "value":"123"}`))
 	router.ServeHTTP(w, req)
 	assert.Equal(201, w.Code)
 
@@ -40,6 +34,24 @@ func TestAdd(t *testing.T) {
 
 	assert.True(controller.Kv.Exists("all"))
 	assert.False(controller.Kv.Exists("fake"))
+}
+
+func TestAddBroken(t *testing.T) {
+	assert := assert.New(t)
+	controller := controller.NewController()
+	router := setupRouter(controller)
+
+	// create key with broken JSON
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/store", strings.NewReader(`{"key":"all" "value":"123"}`))
+	router.ServeHTTP(w, req)
+	assert.Equal(400, w.Code)
+
+	// create key with missing key
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/store", strings.NewReader(`{"Xkey":"all", "value":"123"}`))
+	router.ServeHTTP(w, req)
+	assert.Equal(400, w.Code)
 }
 
 func TestAddPath(t *testing.T) {

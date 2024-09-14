@@ -77,17 +77,14 @@ func main() {
 
 	controller := controller.NewController()
 	router := setupRouter(controller)
-	ticker, done := backgroundExpiry(controller, freqDuration)
+	controller.Kv.Start(freqDuration)
 
 	log.Printf("Listening address %q\n", *addrString)
 	log.Printf("Cleanup frequency %q\n", freqDuration)
 
 	chain := LoggerMiddleware(router)
 	if err := http.ListenAndServe(*addrString, chain); err != nil {
-		// stop and close expiry go function...
-		ticker.Stop()
-		done <- true
-
+		controller.Kv.Stop()
 		log.Fatal(err)
 	}
 }

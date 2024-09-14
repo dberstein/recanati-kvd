@@ -24,6 +24,8 @@ func (r *Record) IsExpired() bool {
 type KV struct {
 	sync.RWMutex
 	values map[string]Record
+	ticker *time.Ticker
+	done   chan bool
 }
 
 func NewKV() *KV {
@@ -78,7 +80,11 @@ func (kv *KV) Delete(key string) {
 	kv.delete(key)
 }
 
+// Expire deletes expired keys
 func (kv *KV) Expire() {
+	kv.Lock()
+	defer kv.Unlock()
+
 	now := time.Now()
 	for k, v := range kv.values {
 		if v.expires.IsZero() {
@@ -87,7 +93,7 @@ func (kv *KV) Expire() {
 		if v.expires.After(now) {
 			continue
 		}
-		kv.Delete(k)
+		kv.delete(k)
 	}
 }
 
@@ -120,4 +126,28 @@ func (kv *KV) List() map[string]string {
 func (kv *KV) delete(key string) {
 	delete(kv.values, key)
 	log.Print("\tdeleted key: ", key)
+}
+
+func (kv *KV) Start(freq time.Duration) {
+	// expiry ticker
+	kv.ticker = time.NewTicker(freq)
+	kv.done = make(chan bool)
+
+	// expire keys in go function and ticker...
+	go func() {
+		for {
+			select {
+			case <-kv.done:
+				return
+			case t := <-kv.ticker.C:
+				log.Print("Tick at: ", t)
+				kv.Expire()
+			}
+		}
+	}()
+}
+
+func (kv *KV) Stop() {
+	kv.ticker.Stop()
+	kv.done <- true
 }

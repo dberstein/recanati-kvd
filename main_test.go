@@ -32,6 +32,28 @@ func TestAdd(t *testing.T) {
 	assert.Equal("123", string(val))
 }
 
+func TestAddPath(t *testing.T) {
+	assert := assert.New(t)
+	controller := controller.NewController()
+	router := setupRouter(controller)
+
+	// missing key
+	val, err := controller.Kv.Get("all")
+	assert.Equal(err.Error(), "\tkey not found: \"all\"")
+	assert.Equal([]uint8([]byte(nil)), val)
+
+	// create key
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/store/all", strings.NewReader(`{"key":"some", "value":"123"}`))
+	router.ServeHTTP(w, req)
+	assert.Equal(201, w.Code)
+
+	// key exists
+	val, err = controller.Kv.Get("all")
+	assert.Equal(err, nil)
+	assert.Equal(`{"key":"some", "value":"123"}`, string(val))
+}
+
 func TestGet(t *testing.T) {
 	assert := assert.New(t)
 	controller := controller.NewController()

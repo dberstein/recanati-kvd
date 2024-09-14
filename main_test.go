@@ -23,7 +23,7 @@ func TestAdd(t *testing.T) {
 
 	// create key
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/store", strings.NewReader(`{"key":"all", "value":"123"}`))
+	req, _ := http.NewRequest("POST", "/store?expires=1s", strings.NewReader(`{"key":"all", "value":"123"}`))
 	LoggerMiddleware(router).ServeHTTP(w, req)
 	assert.Equal(201, w.Code)
 

@@ -24,7 +24,7 @@ func TestAdd(t *testing.T) {
 	// create key
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/store", strings.NewReader(`{"key":"all", "value":"123"}`))
-	router.ServeHTTP(w, req)
+	LoggerMiddleware(router).ServeHTTP(w, req)
 	assert.Equal(201, w.Code)
 
 	// key exists
@@ -44,13 +44,13 @@ func TestAddBroken(t *testing.T) {
 	// create key with broken JSON
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/store", strings.NewReader(`{"key":"all" "value":"123"}`))
-	router.ServeHTTP(w, req)
+	LoggerMiddleware(router).ServeHTTP(w, req)
 	assert.Equal(400, w.Code)
 
 	// create key with missing key
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("POST", "/store", strings.NewReader(`{"Xkey":"all", "value":"123"}`))
-	router.ServeHTTP(w, req)
+	LoggerMiddleware(router).ServeHTTP(w, req)
 	assert.Equal(400, w.Code)
 }
 
@@ -67,7 +67,7 @@ func TestAddPath(t *testing.T) {
 	// create key
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/store/all", strings.NewReader(`{"key":"some", "value":"123"}`))
-	router.ServeHTTP(w, req)
+	LoggerMiddleware(router).ServeHTTP(w, req)
 	assert.Equal(201, w.Code)
 
 	// key exists
@@ -93,10 +93,9 @@ func TestGet(t *testing.T) {
 	// request key
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", "/store/all", nil)
-	router.ServeHTTP(w, req)
+	LoggerMiddleware(router).ServeHTTP(w, req)
 	assert.Equal(200, w.Code)
-	body, _ := w.Body.ReadBytes('\n')
-	assert.Equal([]uint8([]byte{0x31, 0x32, 0x33}), body)
+	assert.Equal("123", w.Body.String())
 }
 
 func TestDelete(t *testing.T) {
@@ -107,7 +106,7 @@ func TestDelete(t *testing.T) {
 	// create key
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/store", strings.NewReader(`{"key":"all", "value":"123"}`))
-	router.ServeHTTP(w, req)
+	LoggerMiddleware(router).ServeHTTP(w, req)
 	assert.Equal(201, w.Code)
 
 	assert.True(controller.Kv.Exists("all"))
@@ -115,7 +114,7 @@ func TestDelete(t *testing.T) {
 	// delete key
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("DELETE", "/store/all", nil)
-	router.ServeHTTP(w, req)
+	LoggerMiddleware(router).ServeHTTP(w, req)
 	assert.Equal(200, w.Code)
 
 	// key does not exists
@@ -136,13 +135,13 @@ func TestList(t *testing.T) {
 	router.ServeHTTP(w, req)
 	assert.Equal(201, w.Code)
 	req, _ = http.NewRequest("POST", "/store", strings.NewReader(`{"key":"all2", "value":"321"}`))
-	router.ServeHTTP(w, req)
+	LoggerMiddleware(router).ServeHTTP(w, req)
 	assert.Equal(201, w.Code)
 
 	// list keys
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", "/store-all", nil)
-	router.ServeHTTP(w, req)
+	LoggerMiddleware(router).ServeHTTP(w, req)
 	assert.Equal(200, w.Code)
 	assert.Equal("{\"all1\":\"0s\",\"all2\":\"0s\"}", w.Body.String())
 
@@ -162,7 +161,7 @@ func TestExpire(t *testing.T) {
 	// create keys
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/store?expire=1ns", strings.NewReader(`{"key":"all", "value":"123"}`))
-	router.ServeHTTP(w, req)
+	LoggerMiddleware(router).ServeHTTP(w, req)
 	assert.Equal(201, w.Code)
 
 	controller.Kv.Expire()

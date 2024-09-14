@@ -35,7 +35,7 @@ func LoggerMiddleware(next http.Handler) http.Handler {
 
 			ip, _, err := net.SplitHostPort(r.RemoteAddr)
 			if err != nil {
-				panic(err)
+				log.Print("Error", err.Error())
 			}
 
 			log.Print(r.Method, r.URL, ip, rw.StatusCode, time.Now().Sub(start), r.Header["User-Agent"])

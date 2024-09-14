@@ -21,9 +21,15 @@ func TestAdd(t *testing.T) {
 	assert.Equal(err.Error(), "\tkey not found: \"all\"")
 	assert.Equal([]uint8([]byte(nil)), val)
 
-	// create key
+	// create key with broken JSON
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/store", strings.NewReader(`{"key":"all", "value":"123"}`))
+	req, _ := http.NewRequest("POST", "/store", strings.NewReader(`{"key":"all" "value":"123"}`))
+	router.ServeHTTP(w, req)
+	assert.Equal(400, w.Code)
+
+	// create key
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/store", strings.NewReader(`{"key":"all", "value":"123"}`))
 	router.ServeHTTP(w, req)
 	assert.Equal(201, w.Code)
 
